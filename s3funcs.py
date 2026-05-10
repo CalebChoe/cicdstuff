@@ -7,6 +7,7 @@ import boto3
 from pathlib import Path
 from botocore.exceptions import ClientError
 
+print(Path(__file__).parent.absolute())
 secrets_path = Path(__file__).parent / "resources" / "secrets.txt"
 
 with open(secrets_path, "r") as f:

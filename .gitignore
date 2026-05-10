@@ -1,3 +1,4 @@
 resources/
 *.txt
-streamlit
+streamlit.py
+aimadethis.py
