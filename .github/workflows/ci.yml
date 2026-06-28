@@ -30,7 +30,7 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    needs: lint          # waits for lint to pass first
+    needs: lint
 
     steps:
       - uses: actions/checkout@v4
@@ -45,11 +45,30 @@ jobs:
       - name: Run pytest
         run: pytest test_calc.py -v
 
-  # ── Stage 3: Deploy ────────────────────────────────────────
+  # ── Stage 3: Docker Build & Test ───────────────────────────
+  docker:
+    name: Docker Build & Test
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t calc-app .
+
+      - name: Run streamlit healthcheck
+        run: |
+          docker run -d -p 8501:8501 --name calc-app calc-app
+          sleep 5
+          curl --fail http://localhost:8501 || exit 1
+          docker stop calc-app
+
+  # ── Stage 4: Deploy ────────────────────────────────────────
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    needs: test          # waits for test to pass first
+    needs: docker
     if: github.event_name == 'push'
 
     steps:
@@ -66,6 +85,7 @@ jobs:
         run: |
           mkdir -p dist
           cp calc.py dist/
+          cp app.py dist/
           echo "Build complete: $(date)" > dist/build.txt
 
       - name: Upload build artifact
